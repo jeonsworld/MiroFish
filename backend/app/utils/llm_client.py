@@ -32,6 +32,33 @@ class LLMClient:
             base_url=self.base_url
         )
     
+    def _create_with_param_fallback(self, kwargs: dict):
+        """Call chat.completions.create, auto-dropping unsupported params."""
+        import re as _re
+        _PARAM_FALLBACKS = {
+            "max_completion_tokens": "max_tokens",  # try legacy name
+            "max_tokens": None,                     # just drop
+            "temperature": None,
+        }
+        while True:
+            try:
+                return self.client.chat.completions.create(**kwargs)
+            except Exception as e:
+                err = str(e)
+                if "Unsupported" not in err and "not supported" not in err:
+                    raise
+                # Find which param was rejected
+                dropped = False
+                for param, fallback in _PARAM_FALLBACKS.items():
+                    if param in err and param in kwargs:
+                        val = kwargs.pop(param)
+                        if fallback and fallback not in kwargs:
+                            kwargs[fallback] = val
+                        dropped = True
+                        break
+                if not dropped:
+                    raise
+
     def chat(
         self,
         messages: List[Dict[str, str]],
@@ -55,22 +82,16 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
+            "max_completion_tokens": max_tokens,
         }
 
         if response_format:
             kwargs["response_format"] = response_format
 
-        # 최신 OpenAI 모델(o1, gpt-5 등)은 max_tokens 대신 max_completion_tokens 사용
-        try:
-            kwargs["max_completion_tokens"] = max_tokens
-            response = self.client.chat.completions.create(**kwargs)
-        except Exception as e:
-            if "max_completion_tokens" in str(e) or "Unsupported parameter" in str(e):
-                kwargs.pop("max_completion_tokens", None)
-                kwargs["max_tokens"] = max_tokens
-                response = self.client.chat.completions.create(**kwargs)
-            else:
-                raise
+        # Some models (o1, gpt-5, etc.) don't support certain params like
+        # temperature, max_tokens, max_completion_tokens. Retry by stripping
+        # the unsupported parameter on each 400 error.
+        response = self._create_with_param_fallback(kwargs)
 
         content = response.choices[0].message.content
         # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
