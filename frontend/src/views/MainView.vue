@@ -15,7 +15,7 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: '图谱', split: '双栏', workbench: '工作台' }[mode] }}
+            {{ { graph: '그래프', split: '분할', workbench: '워크벤치' }[mode] }}
           </button>
         </div>
       </div>
@@ -91,7 +91,7 @@ const viewMode = ref('split') // graph | split | workbench
 
 // Step State
 const currentStep = ref(1) // 1: 图谱构建, 2: 环境搭建, 3: 开始模拟, 4: 报告生成, 5: 深度互动
-const stepNames = ['图谱构建', '环境搭建', '开始模拟', '报告生成', '深度互动']
+const stepNames = ['그래프 구축', '환경 구성', '시뮬레이션 시작', '리포트 생성', '심층 인터랙션']
 
 // Data State
 const currentProjectId = ref(route.params.projectId)
@@ -411,7 +411,7 @@ onUnmounted(() => {
   flex-direction: column;
   background: #FFF;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 /* Header */

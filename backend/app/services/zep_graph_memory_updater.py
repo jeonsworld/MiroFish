@@ -240,7 +240,7 @@ class ZepGraphMemoryUpdater:
         self.api_key = api_key or Config.ZEP_API_KEY
         
         if not self.api_key:
-            raise ValueError("ZEP_API_KEY未配置")
+            raise ValueError("ZEP_API_KEY not configured")
         
         self.client = Zep(api_key=self.api_key)
         

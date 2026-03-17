@@ -260,7 +260,7 @@ class SimulationManager:
         """
         state = self._load_simulation_state(simulation_id)
         if not state:
-            raise ValueError(f"模拟不存在: {simulation_id}")
+            raise ValueError(f"Simulation not found: {simulation_id}")
         
         try:
             state.status = SimulationStatus.PREPARING
@@ -270,12 +270,12 @@ class SimulationManager:
             
             # ========== 阶段1: 读取并过滤实体 ==========
             if progress_callback:
-                progress_callback("reading", 0, "正在连接Zep图谱...")
+                progress_callback("reading", 0, "Connecting to Zep graph...")
             
             reader = ZepEntityReader()
             
             if progress_callback:
-                progress_callback("reading", 30, "正在读取节点数据...")
+                progress_callback("reading", 30, "Reading node data...")
             
             filtered = reader.filter_defined_entities(
                 graph_id=state.graph_id,
@@ -289,14 +289,14 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "reading", 100, 
-                    f"完成，共 {filtered.filtered_count} 个实体",
+                    f"Done, {filtered.filtered_count} entities found",
                     current=filtered.filtered_count,
                     total=filtered.filtered_count
                 )
             
             if filtered.filtered_count == 0:
                 state.status = SimulationStatus.FAILED
-                state.error = "没有找到符合条件的实体，请检查图谱是否正确构建"
+                state.error = "No matching entities found, please check if the graph was built correctly"
                 self._save_simulation_state(state)
                 return state
             
@@ -306,7 +306,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 0, 
-                    "开始生成...",
+                    "Starting generation...",
                     current=0,
                     total=total_entities
                 )
@@ -352,7 +352,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 95, 
-                    "保存Profile文件...",
+                    "Saving profile files...",
                     current=total_entities,
                     total=total_entities
                 )
@@ -375,7 +375,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 100, 
-                    f"完成，共 {len(profiles)} 个Profile",
+                    f"Done, {len(profiles)} profiles generated",
                     current=len(profiles),
                     total=len(profiles)
                 )
@@ -384,7 +384,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 0, 
-                    "正在分析模拟需求...",
+                    "Analyzing simulation requirements...",
                     current=0,
                     total=3
                 )
@@ -394,7 +394,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 30, 
-                    "正在调用LLM生成配置...",
+                    "Calling LLM to generate config...",
                     current=1,
                     total=3
                 )
@@ -413,7 +413,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 70, 
-                    "正在保存配置文件...",
+                    "Saving config files...",
                     current=2,
                     total=3
                 )
@@ -429,7 +429,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 100, 
-                    "配置生成完成",
+                    "Config generation completed",
                     current=3,
                     total=3
                 )
@@ -481,7 +481,7 @@ class SimulationManager:
         """获取模拟的Agent Profile"""
         state = self._load_simulation_state(simulation_id)
         if not state:
-            raise ValueError(f"模拟不存在: {simulation_id}")
+            raise ValueError(f"Simulation not found: {simulation_id}")
         
         sim_dir = self._get_simulation_dir(simulation_id)
         profile_path = os.path.join(sim_dir, f"{platform}_profiles.json")

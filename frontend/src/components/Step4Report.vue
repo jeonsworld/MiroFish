@@ -58,7 +58,7 @@
                       <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke="#4B5563" stroke-linecap="round"></path>
                     </svg>
                   </div>
-                  <span class="loading-text">正在生成{{ section.title }}...</span>
+                  <span class="loading-text">{{ section.title }} 생성 중...</span>
                 </div>
               </div>
             </div>
@@ -129,7 +129,7 @@
 
           <!-- Next Step Button - 在完成后显示 -->
           <button v-if="isComplete" class="next-step-btn" @click="goToInteraction">
-            <span>进入深度互动</span>
+            <span>심층 인터랙션으로 이동</span>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
@@ -1776,7 +1776,7 @@ const activeStep = computed(() => {
   if (doneSteps.length > 0) return doneSteps[doneSteps.length - 1]
   
   // 否则返回第一个步骤
-  return steps[0] || { noLabel: '--', title: '等待开始', status: 'todo', meta: '' }
+  return steps[0] || { noLabel: '--', title: 'Waiting to start', status: 'todo', meta: '' }
 })
 
 const workflowSteps = computed(() => {
@@ -2208,7 +2208,7 @@ watch(() => props.reportId, (newId) => {
   display: flex;
   flex-direction: column;
   background: #F8F9FA;
-  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
   overflow: hidden;
 }
 
@@ -2486,7 +2486,7 @@ watch(() => props.reportId, (newId) => {
 
 /* Generated Content */
 .generated-content {
-  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.8;
   color: #374151;

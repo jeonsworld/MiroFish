@@ -15,7 +15,7 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: '图谱', split: '双栏', workbench: '工作台' }[mode] }}
+            {{ { graph: '그래프', split: '분할', workbench: '워크벤치' }[mode] }}
           </button>
         </div>
       </div>
@@ -23,7 +23,7 @@
       <div class="header-right">
         <div class="workflow-step">
           <span class="step-num">Step 2/5</span>
-          <span class="step-name">环境搭建</span>
+          <span class="step-name">환경 구성</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -196,7 +196,7 @@ const checkAndStopRunningSimulation = async () => {
         if (closeRes.success) {
           addLog('✓ 模拟环境已关闭')
         } else {
-          addLog(`关闭模拟环境失败: ${closeRes.error || '未知错误'}`)
+          addLog(`关闭模拟环境失败: ${closeRes.error || 'unknown error'}`)
           // 如果优雅关闭失败，尝试强制停止
           await forceStopSimulation()
         }
@@ -228,7 +228,7 @@ const forceStopSimulation = async () => {
     if (stopRes.success) {
       addLog('✓ 模拟已强制停止')
     } else {
-      addLog(`强制停止模拟失败: ${stopRes.error || '未知错误'}`)
+      addLog(`强制停止模拟失败: ${stopRes.error || 'unknown error'}`)
     }
   } catch (err) {
     addLog(`强制停止模拟异常: ${err.message}`)
@@ -258,7 +258,7 @@ const loadSimulationData = async () => {
         }
       }
     } else {
-      addLog(`加载模拟数据失败: ${simRes.error || '未知错误'}`)
+      addLog(`加载模拟数据失败: ${simRes.error || 'unknown error'}`)
     }
   } catch (err) {
     addLog(`加载异常: ${err.message}`)
@@ -304,7 +304,7 @@ onMounted(async () => {
   flex-direction: column;
   background: #FFF;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 /* Header */

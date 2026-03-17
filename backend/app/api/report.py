@@ -53,9 +53,9 @@ def generate_report():
         if not simulation_id:
             return jsonify({
                 "success": False,
-                "error": "请提供 simulation_id"
+                "error": "Please provide simulation_id"
             }), 400
-        
+
         force_regenerate = data.get('force_regenerate', False)
         
         # 获取模拟信息
@@ -65,7 +65,7 @@ def generate_report():
         if not state:
             return jsonify({
                 "success": False,
-                "error": f"模拟不存在: {simulation_id}"
+                "error": f"Simulation not found: {simulation_id}"
             }), 404
         
         # 检查是否已有报告
@@ -78,7 +78,7 @@ def generate_report():
                         "simulation_id": simulation_id,
                         "report_id": existing_report.report_id,
                         "status": "completed",
-                        "message": "报告已存在",
+                        "message": "Report already exists",
                         "already_generated": True
                     }
                 })
@@ -88,21 +88,21 @@ def generate_report():
         if not project:
             return jsonify({
                 "success": False,
-                "error": f"项目不存在: {state.project_id}"
+                "error": f"Project not found: {state.project_id}"
             }), 404
         
         graph_id = state.graph_id or project.graph_id
         if not graph_id:
             return jsonify({
                 "success": False,
-                "error": "缺少图谱ID，请确保已构建图谱"
+                "error": "Missing graph ID, please ensure the graph has been built"
             }), 400
         
         simulation_requirement = project.simulation_requirement
         if not simulation_requirement:
             return jsonify({
                 "success": False,
-                "error": "缺少模拟需求描述"
+                "error": "Missing simulation requirement description"
             }), 400
         
         # 提前生成 report_id，以便立即返回给前端
@@ -127,7 +127,7 @@ def generate_report():
                     task_id,
                     status=TaskStatus.PROCESSING,
                     progress=0,
-                    message="初始化Report Agent..."
+                    message="Initializing Report Agent..."
                 )
                 
                 # 创建Report Agent
@@ -164,7 +164,7 @@ def generate_report():
                         }
                     )
                 else:
-                    task_manager.fail_task(task_id, report.error or "报告生成失败")
+                    task_manager.fail_task(task_id, report.error or "Report generation failed")
                 
             except Exception as e:
                 logger.error(f"报告生成失败: {str(e)}")
@@ -181,7 +181,7 @@ def generate_report():
                 "report_id": report_id,
                 "task_id": task_id,
                 "status": "generating",
-                "message": "报告生成任务已启动，请通过 /api/report/generate/status 查询进度",
+                "message": "Report generation task started. Check progress via /api/report/generate/status",
                 "already_generated": False
             }
         })
@@ -234,7 +234,7 @@ def get_generate_status():
                         "report_id": existing_report.report_id,
                         "status": "completed",
                         "progress": 100,
-                        "message": "报告已生成",
+                        "message": "Report already generated",
                         "already_completed": True
                     }
                 })
@@ -242,7 +242,7 @@ def get_generate_status():
         if not task_id:
             return jsonify({
                 "success": False,
-                "error": "请提供 task_id 或 simulation_id"
+                "error": "Please provide task_id or simulation_id"
             }), 400
         
         task_manager = TaskManager()
@@ -251,7 +251,7 @@ def get_generate_status():
         if not task:
             return jsonify({
                 "success": False,
-                "error": f"任务不存在: {task_id}"
+                "error": f"Task not found: {task_id}"
             }), 404
         
         return jsonify({
@@ -294,14 +294,14 @@ def get_report(report_id: str):
         if not report:
             return jsonify({
                 "success": False,
-                "error": f"报告不存在: {report_id}"
+                "error": f"Report not found: {report_id}"
             }), 404
-        
+
         return jsonify({
             "success": True,
             "data": report.to_dict()
         })
-        
+
     except Exception as e:
         logger.error(f"获取报告失败: {str(e)}")
         return jsonify({
@@ -331,7 +331,7 @@ def get_report_by_simulation(simulation_id: str):
         if not report:
             return jsonify({
                 "success": False,
-                "error": f"该模拟暂无报告: {simulation_id}",
+                "error": f"No report for this simulation: {simulation_id}",
                 "has_report": False
             }), 404
         
@@ -403,9 +403,9 @@ def download_report(report_id: str):
         if not report:
             return jsonify({
                 "success": False,
-                "error": f"报告不存在: {report_id}"
+                "error": f"Report not found: {report_id}"
             }), 404
-        
+
         md_path = ReportManager._get_report_markdown_path(report_id)
         
         if not os.path.exists(md_path):
@@ -445,12 +445,12 @@ def delete_report(report_id: str):
         if not success:
             return jsonify({
                 "success": False,
-                "error": f"报告不存在: {report_id}"
+                "error": f"Report not found: {report_id}"
             }), 404
-        
+
         return jsonify({
             "success": True,
-            "message": f"报告已删除: {report_id}"
+            "message": f"Report deleted: {report_id}"
         })
         
     except Exception as e:
@@ -501,13 +501,13 @@ def chat_with_report_agent():
         if not simulation_id:
             return jsonify({
                 "success": False,
-                "error": "请提供 simulation_id"
+                "error": "Please provide simulation_id"
             }), 400
-        
+
         if not message:
             return jsonify({
                 "success": False,
-                "error": "请提供 message"
+                "error": "Please provide message"
             }), 400
         
         # 获取模拟和项目信息
@@ -517,21 +517,21 @@ def chat_with_report_agent():
         if not state:
             return jsonify({
                 "success": False,
-                "error": f"模拟不存在: {simulation_id}"
+                "error": f"Simulation not found: {simulation_id}"
             }), 404
-        
+
         project = ProjectManager.get_project(state.project_id)
         if not project:
             return jsonify({
                 "success": False,
-                "error": f"项目不存在: {state.project_id}"
+                "error": f"Project not found: {state.project_id}"
             }), 404
-        
+
         graph_id = state.graph_id or project.graph_id
         if not graph_id:
             return jsonify({
                 "success": False,
-                "error": "缺少图谱ID"
+                "error": "Missing graph ID"
             }), 400
         
         simulation_requirement = project.simulation_requirement or ""
@@ -585,7 +585,7 @@ def get_report_progress(report_id: str):
         if not progress:
             return jsonify({
                 "success": False,
-                "error": f"报告不存在或进度信息不可用: {report_id}"
+                "error": f"Report not found or progress info unavailable: {report_id}"
             }), 404
         
         return jsonify({
@@ -673,7 +673,7 @@ def get_single_section(report_id: str, section_index: int):
         if not os.path.exists(section_path):
             return jsonify({
                 "success": False,
-                "error": f"章节不存在: section_{section_index:02d}.md"
+                "error": f"Section not found: section_{section_index:02d}.md"
             }), 404
         
         with open(section_path, 'r', encoding='utf-8') as f:
@@ -949,7 +949,7 @@ def search_graph_tool():
         if not graph_id or not query:
             return jsonify({
                 "success": False,
-                "error": "请提供 graph_id 和 query"
+                "error": "Please provide graph_id and query"
             }), 400
         
         from ..services.zep_tools import ZepToolsService
@@ -993,11 +993,11 @@ def get_graph_statistics_tool():
         if not graph_id:
             return jsonify({
                 "success": False,
-                "error": "请提供 graph_id"
+                "error": "Please provide graph_id"
             }), 400
-        
+
         from ..services.zep_tools import ZepToolsService
-        
+
         tools = ZepToolsService()
         result = tools.get_graph_statistics(graph_id)
         

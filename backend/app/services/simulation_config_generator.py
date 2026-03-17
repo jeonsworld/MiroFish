@@ -24,26 +24,43 @@ from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.simulation_config')
 
-# 中国作息时间配置（北京时间）
-CHINA_TIMEZONE_CONFIG = {
-    # 深夜时段（几乎无人活动）
+# 한국 시간 (KST, UTC+9) 기반 활동 패턴
+KOREA_TIMEZONE_CONFIG = {
+    # 深夜時段（ほぼ無人）
     "dead_hours": [0, 1, 2, 3, 4, 5],
-    # 早间时段（逐渐醒来）
+    # 早間時段（起床・通勤）
     "morning_hours": [6, 7, 8],
-    # 工作时段
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    # 晚间高峰（最活跃）
-    "peak_hours": [19, 20, 21, 22],
-    # 夜间时段（活跃度下降）
-    "night_hours": [23],
+    # 勤務時段
+    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17],
+    # 晩間ピーク（最も活発 - Korean evening peak extends later）
+    "peak_hours": [19, 20, 21, 22, 23],
+    # 夜間時段（活動度低下）
+    "night_hours": [18],
     # 活跃度系数
     "activity_multipliers": {
-        "dead": 0.05,      # 凌晨几乎无人
-        "morning": 0.4,    # 早间逐渐活跃
-        "work": 0.7,       # 工作时段中等
-        "peak": 1.5,       # 晚间高峰
-        "night": 0.5       # 深夜下降
+        "dead": 0.05,      # 深夜 almost no activity
+        "morning": 0.3,    # 早間 waking up, commute
+        "work": 0.5,       # 勤務時段 moderate
+        "peak": 1.5,       # 晩間ピーク (19-23)
+        "night": 0.4       # 夜間下降
     }
+}
+
+# Korean daily routine activity pattern (한국 시간, KST)
+KOREA_ACTIVITY_PATTERN = {
+    'deep_night': {'hours': (0, 6), 'weight': 0.05},  # Almost no activity
+    'morning': {'hours': (6, 9), 'weight': 0.3},      # Waking up, commute
+    'work': {'hours': (9, 18), 'weight': 0.5},        # Work hours
+    'evening_peak': {'hours': (18, 23), 'weight': 1.0}, # Peak activity
+    'late_night': {'hours': (23, 24), 'weight': 0.4},  # Late night browsing
+}
+
+# Hourly activity coefficients for Korean daily routine patterns (KST)
+HOURLY_ACTIVITY = {
+    0: 0.1, 1: 0.05, 2: 0.03, 3: 0.02, 4: 0.02, 5: 0.05,  # Deep night
+    6: 0.15, 7: 0.3, 8: 0.4,                                   # Morning
+    9: 0.5, 10: 0.5, 11: 0.5, 12: 0.6, 13: 0.5, 14: 0.5, 15: 0.5, 16: 0.5, 17: 0.5,  # Work
+    18: 0.7, 19: 0.85, 20: 1.0, 21: 1.0, 22: 0.9, 23: 0.6,  # Evening peak
 }
 
 
@@ -81,32 +98,32 @@ class AgentActivityConfig:
 
 @dataclass  
 class TimeSimulationConfig:
-    """时间模拟配置（基于中国人作息习惯）"""
+    """시간 시뮬레이션 설정 (Korean daily routine patterns, KST)"""
     # 模拟总时长（模拟小时数）
     total_simulation_hours: int = 72  # 默认模拟72小时（3天）
-    
+
     # 每轮代表的时间（模拟分钟）- 默认60分钟（1小时），加快时间流速
     minutes_per_round: int = 60
-    
+
     # 每小时激活的Agent数量范围
     agents_per_hour_min: int = 5
     agents_per_hour_max: int = 20
-    
-    # 高峰时段（晚间19-22点，中国人最活跃的时间）
-    peak_hours: List[int] = field(default_factory=lambda: [19, 20, 21, 22])
+
+    # 高峰时段（Korean evening peak 19-23, KST）
+    peak_hours: List[int] = field(default_factory=lambda: [19, 20, 21, 22, 23])
     peak_activity_multiplier: float = 1.5
-    
+
     # 低谷时段（凌晨0-5点，几乎无人活动）
     off_peak_hours: List[int] = field(default_factory=lambda: [0, 1, 2, 3, 4, 5])
-    off_peak_activity_multiplier: float = 0.05  # 凌晨活跃度极低
-    
-    # 早间时段
+    off_peak_activity_multiplier: float = 0.05  # 深夜 almost no activity
+
+    # 早间时段 (Korean morning commute 6-9)
     morning_hours: List[int] = field(default_factory=lambda: [6, 7, 8])
-    morning_activity_multiplier: float = 0.4
-    
-    # 工作时段
-    work_hours: List[int] = field(default_factory=lambda: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18])
-    work_activity_multiplier: float = 0.7
+    morning_activity_multiplier: float = 0.3
+
+    # 工作時段 (9-18, KST)
+    work_hours: List[int] = field(default_factory=lambda: [9, 10, 11, 12, 13, 14, 15, 16, 17])
+    work_activity_multiplier: float = 0.5
 
 
 @dataclass
@@ -232,7 +249,7 @@ class SimulationConfigGenerator:
         self.model_name = model_name or Config.LLM_MODEL_NAME
         
         if not self.api_key:
-            raise ValueError("LLM_API_KEY 未配置")
+            raise ValueError("LLM_API_KEY not configured")
         
         self.client = OpenAI(
             api_key=self.api_key,
@@ -292,14 +309,14 @@ class SimulationConfigGenerator:
         reasoning_parts = []
         
         # ========== 步骤1: 生成时间配置 ==========
-        report_progress(1, "生成时间配置...")
+        report_progress(1, "Generating time config...")
         num_entities = len(entities)
         time_config_result = self._generate_time_config(context, num_entities)
         time_config = self._parse_time_config(time_config_result, num_entities)
         reasoning_parts.append(f"时间配置: {time_config_result.get('reasoning', '成功')}")
         
         # ========== 步骤2: 生成事件配置 ==========
-        report_progress(2, "生成事件配置和热点话题...")
+        report_progress(2, "Generating event config and hot topics...")
         event_config_result = self._generate_event_config(context, simulation_requirement, entities)
         event_config = self._parse_event_config(event_config_result)
         reasoning_parts.append(f"事件配置: {event_config_result.get('reasoning', '成功')}")
@@ -313,7 +330,7 @@ class SimulationConfigGenerator:
             
             report_progress(
                 3 + batch_idx,
-                f"生成Agent配置 ({start_idx + 1}-{end_idx}/{len(entities)})..."
+                f"Generating agent config ({start_idx + 1}-{end_idx}/{len(entities)})..."
             )
             
             batch_configs = self._generate_agent_configs_batch(
@@ -333,7 +350,7 @@ class SimulationConfigGenerator:
         reasoning_parts.append(f"初始帖子分配: {assigned_count} 个帖子已分配发布者")
         
         # ========== 最后一步: 生成平台配置 ==========
-        report_progress(total_steps, "生成平台配置...")
+        report_progress(total_steps, "Generating platform config...")
         twitter_config = None
         reddit_config = None
         
@@ -400,7 +417,7 @@ class SimulationConfigGenerator:
         if remaining_length > 0 and document_text:
             doc_text = document_text[:remaining_length]
             if len(document_text) > remaining_length:
-                doc_text += "\n...(文档已截断)"
+                doc_text += "\n...(document truncated)"
             context_parts.append(f"\n## 原始文档内容\n{doc_text}")
         
         return "\n".join(context_parts)
@@ -539,52 +556,52 @@ class SimulationConfigGenerator:
         # 计算最大允许值（80%的agent数）
         max_agents_allowed = max(1, int(num_entities * 0.9))
         
-        prompt = f"""基于以下模拟需求，生成时间模拟配置。
+        prompt = f"""Based on the following simulation requirements, generate a time simulation configuration.
 
 {context_truncated}
 
-## 任务
-请生成时间配置JSON。
+## Task
+Generate a time configuration JSON.
 
-### 基本原则（仅供参考，需根据具体事件和参与群体灵活调整）：
-- 用户群体为中国人，需符合北京时间作息习惯
-- 凌晨0-5点几乎无人活动（活跃度系数0.05）
-- 早上6-8点逐渐活跃（活跃度系数0.4）
-- 工作时间9-18点中等活跃（活跃度系数0.7）
-- 晚间19-22点是高峰期（活跃度系数1.5）
-- 23点后活跃度下降（活跃度系数0.5）
-- 一般规律：凌晨低活跃、早间渐增、工作时段中等、晚间高峰
-- **重要**：以下示例值仅供参考，你需要根据事件性质、参与群体特点来调整具体时段
-  - 例如：学生群体高峰可能是21-23点；媒体全天活跃；官方机构只在工作时间
-  - 例如：突发热点可能导致深夜也有讨论，off_peak_hours 可适当缩短
+### Basic principles (for reference only, adjust based on the specific event and participant groups):
+- The user base follows Korean daily routine patterns (KST, UTC+9)
+- 0-5 AM: almost no activity (activity coefficient 0.05)
+- 6-8 AM: gradually waking up, morning commute (activity coefficient 0.3)
+- 9-17: work hours, moderate activity (activity coefficient 0.5)
+- 18-23: evening peak, highest activity - Korean internet users are most active during this period (activity coefficient 1.5)
+- 23+: late night, activity decreases but Korean users tend to stay up later (activity coefficient 0.4)
+- General pattern: deep night low activity, morning gradual increase, work hours moderate, evening peak
+- **Important**: The example values below are for reference only. Adjust time slots based on event nature and participant characteristics.
+  - Example: student groups may peak at 21-24; media active all day; official institutions only during work hours
+  - Example: breaking news may cause late-night discussions, off_peak_hours can be shortened
 
-### 返回JSON格式（不要markdown）
+### Return JSON format (no markdown)
 
-示例：
+Example:
 {{
     "total_simulation_hours": 72,
     "minutes_per_round": 60,
     "agents_per_hour_min": 5,
     "agents_per_hour_max": 50,
-    "peak_hours": [19, 20, 21, 22],
+    "peak_hours": [19, 20, 21, 22, 23],
     "off_peak_hours": [0, 1, 2, 3, 4, 5],
     "morning_hours": [6, 7, 8],
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    "reasoning": "针对该事件的时间配置说明"
+    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17],
+    "reasoning": "Time configuration explanation for this event"
 }}
 
-字段说明：
-- total_simulation_hours (int): 模拟总时长，24-168小时，突发事件短、持续话题长
-- minutes_per_round (int): 每轮时长，30-120分钟，建议60分钟
-- agents_per_hour_min (int): 每小时最少激活Agent数（取值范围: 1-{max_agents_allowed}）
-- agents_per_hour_max (int): 每小时最多激活Agent数（取值范围: 1-{max_agents_allowed}）
-- peak_hours (int数组): 高峰时段，根据事件参与群体调整
-- off_peak_hours (int数组): 低谷时段，通常深夜凌晨
-- morning_hours (int数组): 早间时段
-- work_hours (int数组): 工作时段
-- reasoning (string): 简要说明为什么这样配置"""
+Field descriptions:
+- total_simulation_hours (int): Total simulation duration, 24-168 hours, shorter for breaking events, longer for sustained topics
+- minutes_per_round (int): Duration per round, 30-120 minutes, recommended 60 minutes
+- agents_per_hour_min (int): Minimum agents activated per hour (range: 1-{max_agents_allowed})
+- agents_per_hour_max (int): Maximum agents activated per hour (range: 1-{max_agents_allowed})
+- peak_hours (int array): Peak hours, adjust based on participant groups (Korean evening peak: 19-23)
+- off_peak_hours (int array): Low activity hours, typically deep night (0-5)
+- morning_hours (int array): Morning hours (6-8)
+- work_hours (int array): Work hours (9-17)
+- reasoning (string): Brief explanation of why this configuration was chosen"""
 
-        system_prompt = "你是社交媒体模拟专家。返回纯JSON格式，时间配置需符合中国人作息习惯。"
+        system_prompt = "You are a social media simulation expert. Return pure JSON format. Time configuration must follow Korean daily routine patterns (KST)."
         
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -593,17 +610,17 @@ class SimulationConfigGenerator:
             return self._get_default_time_config(num_entities)
     
     def _get_default_time_config(self, num_entities: int) -> Dict[str, Any]:
-        """获取默认时间配置（中国人作息）"""
+        """获取默认时间配置 (Korean daily routine, KST)"""
         return {
             "total_simulation_hours": 72,
             "minutes_per_round": 60,  # 每轮1小时，加快时间流速
             "agents_per_hour_min": max(1, num_entities // 15),
             "agents_per_hour_max": max(5, num_entities // 5),
-            "peak_hours": [19, 20, 21, 22],
+            "peak_hours": [19, 20, 21, 22, 23],
             "off_peak_hours": [0, 1, 2, 3, 4, 5],
             "morning_hours": [6, 7, 8],
-            "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "使用默认中国人作息配置（每轮1小时）"
+            "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17],
+            "reasoning": "Default Korean daily routine configuration (1 hour per round, KST)"
         }
     
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:
@@ -631,13 +648,13 @@ class SimulationConfigGenerator:
             minutes_per_round=result.get("minutes_per_round", 60),  # 默认每轮1小时
             agents_per_hour_min=agents_per_hour_min,
             agents_per_hour_max=agents_per_hour_max,
-            peak_hours=result.get("peak_hours", [19, 20, 21, 22]),
+            peak_hours=result.get("peak_hours", [19, 20, 21, 22, 23]),
             off_peak_hours=result.get("off_peak_hours", [0, 1, 2, 3, 4, 5]),
-            off_peak_activity_multiplier=0.05,  # 凌晨几乎无人
+            off_peak_activity_multiplier=0.05,  # deep night almost no activity
             morning_hours=result.get("morning_hours", [6, 7, 8]),
-            morning_activity_multiplier=0.4,
-            work_hours=result.get("work_hours", list(range(9, 19))),
-            work_activity_multiplier=0.7,
+            morning_activity_multiplier=0.3,
+            work_hours=result.get("work_hours", list(range(9, 18))),
+            work_activity_multiplier=0.5,
             peak_activity_multiplier=1.5
         )
     
@@ -671,36 +688,36 @@ class SimulationConfigGenerator:
         # 使用配置的上下文截断长度
         context_truncated = context[:self.EVENT_CONFIG_CONTEXT_LENGTH]
         
-        prompt = f"""基于以下模拟需求，生成事件配置。
+        prompt = f"""Based on the following simulation requirements, generate an event configuration.
 
-模拟需求: {simulation_requirement}
+Simulation requirement: {simulation_requirement}
 
 {context_truncated}
 
-## 可用实体类型及示例
+## Available Entity Types and Examples
 {type_info}
 
-## 任务
-请生成事件配置JSON：
-- 提取热点话题关键词
-- 描述舆论发展方向
-- 设计初始帖子内容，**每个帖子必须指定 poster_type（发布者类型）**
+## Task
+Please generate an event configuration JSON:
+- Extract hot topic keywords
+- Describe the direction of public opinion development
+- Design initial post content, **each post must specify poster_type (publisher type)**
 
-**重要**: poster_type 必须从上面的"可用实体类型"中选择，这样初始帖子才能分配给合适的 Agent 发布。
-例如：官方声明应由 Official/University 类型发布，新闻由 MediaOutlet 发布，学生观点由 Student 发布。
+**Important**: poster_type must be selected from the "Available Entity Types" above, so that initial posts can be assigned to the appropriate Agent for publishing.
+For example: official statements should be published by Official/University type, news by MediaOutlet, student opinions by Student.
 
-返回JSON格式（不要markdown）：
+Return JSON format (no markdown):
 {{
-    "hot_topics": ["关键词1", "关键词2", ...],
-    "narrative_direction": "<舆论发展方向描述>",
+    "hot_topics": ["keyword1", "keyword2", ...],
+    "narrative_direction": "<description of public opinion direction>",
     "initial_posts": [
-        {{"content": "帖子内容", "poster_type": "实体类型（必须从可用类型中选择）"}},
+        {{"content": "Post content", "poster_type": "Entity type (must be from available types)"}},
         ...
     ],
-    "reasoning": "<简要说明>"
+    "reasoning": "<brief explanation>"
 }}"""
 
-        system_prompt = "你是舆论分析专家。返回纯JSON格式。注意 poster_type 必须精确匹配可用实体类型。"
+        system_prompt = "You are a public opinion analysis expert. Return pure JSON format. Note that poster_type must exactly match available entity types."
         
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -710,7 +727,7 @@ class SimulationConfigGenerator:
                 "hot_topics": [],
                 "narrative_direction": "",
                 "initial_posts": [],
-                "reasoning": "使用默认配置"
+                "reasoning": "Using default configuration"
             }
     
     def _parse_event_config(self, result: Dict[str, Any]) -> EventConfig:
@@ -827,43 +844,43 @@ class SimulationConfigGenerator:
                 "summary": e.summary[:summary_len] if e.summary else ""
             })
         
-        prompt = f"""基于以下信息，为每个实体生成社交媒体活动配置。
+        prompt = f"""Based on the following information, generate social media activity configurations for each entity.
 
-模拟需求: {simulation_requirement}
+Simulation requirement: {simulation_requirement}
 
-## 实体列表
+## Entity list
 ```json
 {json.dumps(entity_list, ensure_ascii=False, indent=2)}
 ```
 
-## 任务
-为每个实体生成活动配置，注意：
-- **时间符合中国人作息**：凌晨0-5点几乎不活动，晚间19-22点最活跃
-- **官方机构**（University/GovernmentAgency）：活跃度低(0.1-0.3)，工作时间(9-17)活动，响应慢(60-240分钟)，影响力高(2.5-3.0)
-- **媒体**（MediaOutlet）：活跃度中(0.4-0.6)，全天活动(8-23)，响应快(5-30分钟)，影响力高(2.0-2.5)
-- **个人**（Student/Person/Alumni）：活跃度高(0.6-0.9)，主要晚间活动(18-23)，响应快(1-15分钟)，影响力低(0.8-1.2)
-- **公众人物/专家**：活跃度中(0.4-0.6)，影响力中高(1.5-2.0)
+## Task
+Generate activity configurations for each entity, following these guidelines:
+- **Activity times follow Korean daily routine patterns (KST)**: 0-5 AM almost no activity, evening 19-23 most active, late night users stay up later
+- **Official institutions** (University/GovernmentAgency): low activity (0.1-0.3), work hours (9-17) only, slow response (60-240 min), high influence (2.5-3.0)
+- **Media** (MediaOutlet): medium activity (0.4-0.6), all day (8-23), fast response (5-30 min), high influence (2.0-2.5)
+- **Individuals** (Student/Person/Alumni): high activity (0.6-0.9), mainly evening/late night (18-24), fast response (1-15 min), low influence (0.8-1.2)
+- **Public figures/experts**: medium activity (0.4-0.6), medium-high influence (1.5-2.0)
 
-返回JSON格式（不要markdown）：
+Return JSON format (no markdown):
 {{
     "agent_configs": [
         {{
-            "agent_id": <必须与输入一致>,
+            "agent_id": <must match input>,
             "activity_level": <0.0-1.0>,
-            "posts_per_hour": <发帖频率>,
-            "comments_per_hour": <评论频率>,
-            "active_hours": [<活跃小时列表，考虑中国人作息>],
-            "response_delay_min": <最小响应延迟分钟>,
-            "response_delay_max": <最大响应延迟分钟>,
-            "sentiment_bias": <-1.0到1.0>,
+            "posts_per_hour": <posting frequency>,
+            "comments_per_hour": <comment frequency>,
+            "active_hours": [<active hours list, following Korean daily routine>],
+            "response_delay_min": <min response delay in minutes>,
+            "response_delay_max": <max response delay in minutes>,
+            "sentiment_bias": <-1.0 to 1.0>,
             "stance": "<supportive/opposing/neutral/observer>",
-            "influence_weight": <影响力权重>
+            "influence_weight": <influence weight>
         }},
         ...
     ]
 }}"""
 
-        system_prompt = "你是社交媒体行为分析专家。返回纯JSON，配置需符合中国人作息习惯。"
+        system_prompt = "You are a social media behavior analysis expert. Return pure JSON. Configurations must follow Korean daily routine patterns (KST)."
         
         try:
             result = self._call_llm_with_retry(prompt, system_prompt)
@@ -902,11 +919,11 @@ class SimulationConfigGenerator:
         return configs
     
     def _generate_agent_config_by_rule(self, entity: EntityNode) -> Dict[str, Any]:
-        """基于规则生成单个Agent配置（中国人作息）"""
+        """基于规则生成单个Agent配置 (Korean daily routine, KST)"""
         entity_type = (entity.get_entity_type() or "Unknown").lower()
-        
+
         if entity_type in ["university", "governmentagency", "ngo"]:
-            # 官方机构：工作时间活动，低频率，高影响力
+            # Official institutions: work hours activity, low frequency, high influence
             return {
                 "activity_level": 0.2,
                 "posts_per_hour": 0.1,
@@ -919,7 +936,7 @@ class SimulationConfigGenerator:
                 "influence_weight": 3.0
             }
         elif entity_type in ["mediaoutlet"]:
-            # 媒体：全天活动，中等频率，高影响力
+            # Media: all day activity, medium frequency, high influence
             return {
                 "activity_level": 0.5,
                 "posts_per_hour": 0.8,
@@ -932,12 +949,12 @@ class SimulationConfigGenerator:
                 "influence_weight": 2.5
             }
         elif entity_type in ["professor", "expert", "official"]:
-            # 专家/教授：工作+晚间活动，中等频率
+            # Experts/professors: work + evening activity, medium frequency
             return {
                 "activity_level": 0.4,
                 "posts_per_hour": 0.3,
                 "comments_per_hour": 0.5,
-                "active_hours": list(range(8, 22)),  # 8:00-21:59
+                "active_hours": list(range(8, 23)),  # 8:00-22:59
                 "response_delay_min": 15,
                 "response_delay_max": 90,
                 "sentiment_bias": 0.0,
@@ -945,12 +962,12 @@ class SimulationConfigGenerator:
                 "influence_weight": 2.0
             }
         elif entity_type in ["student"]:
-            # 学生：晚间为主，高频率
+            # Students: mainly late evening/night, high frequency (Korean students active late)
             return {
                 "activity_level": 0.8,
                 "posts_per_hour": 0.6,
                 "comments_per_hour": 1.5,
-                "active_hours": [8, 9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23],  # 上午+晚间
+                "active_hours": [8, 9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23, 0],  # morning + evening to late night
                 "response_delay_min": 1,
                 "response_delay_max": 15,
                 "sentiment_bias": 0.0,
@@ -958,12 +975,12 @@ class SimulationConfigGenerator:
                 "influence_weight": 0.8
             }
         elif entity_type in ["alumni"]:
-            # 校友：晚间为主
+            # Alumni: evening to late night
             return {
                 "activity_level": 0.6,
                 "posts_per_hour": 0.4,
                 "comments_per_hour": 0.8,
-                "active_hours": [12, 13, 19, 20, 21, 22, 23],  # 午休+晚间
+                "active_hours": [12, 13, 19, 20, 21, 22, 23, 0],  # lunch break + evening to late night
                 "response_delay_min": 5,
                 "response_delay_max": 30,
                 "sentiment_bias": 0.0,
@@ -971,12 +988,12 @@ class SimulationConfigGenerator:
                 "influence_weight": 1.0
             }
         else:
-            # 普通人：晚间高峰
+            # General public: peak evening to late night
             return {
                 "activity_level": 0.7,
                 "posts_per_hour": 0.5,
                 "comments_per_hour": 1.2,
-                "active_hours": [9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23],  # 白天+晚间
+                "active_hours": [9, 10, 11, 12, 13, 18, 19, 20, 21, 22, 23, 0],  # daytime + evening to late night
                 "response_delay_min": 2,
                 "response_delay_max": 20,
                 "sentiment_bias": 0.0,

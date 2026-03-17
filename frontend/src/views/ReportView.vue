@@ -15,7 +15,7 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: '图谱', split: '双栏', workbench: '工作台' }[mode] }}
+            {{ { graph: '그래프', split: '분할', workbench: '워크벤치' }[mode] }}
           </button>
         </div>
       </div>
@@ -23,7 +23,7 @@
       <div class="header-right">
         <div class="workflow-step">
           <span class="step-num">Step 4/5</span>
-          <span class="step-name">报告生成</span>
+          <span class="step-name">리포트 생성</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -169,7 +169,7 @@ const loadReportData = async () => {
         }
       }
     } else {
-      addLog(`获取报告信息失败: ${reportRes.error || '未知错误'}`)
+      addLog(`获取报告信息失败: ${reportRes.error || 'unknown error'}`)
     }
   } catch (err) {
     addLog(`加载异常: ${err.message}`)
@@ -219,7 +219,7 @@ onMounted(() => {
   flex-direction: column;
   background: #FFF;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 /* Header */
