@@ -63,8 +63,8 @@ class AgentActivity:
     def _describe_create_post(self) -> str:
         content = self.action_args.get("content", "")
         if content:
-            return f"发布了一条帖子：「{content}」"
-        return "发布了一条帖子"
+            return f"게시물을 작성했습니다: 「{content}」"
+        return "게시물을 작성했습니다"
     
     def _describe_like_post(self) -> str:
         """点赞帖子 - 包含帖子原文和作者信息"""
@@ -72,12 +72,12 @@ class AgentActivity:
         post_author = self.action_args.get("post_author_name", "")
         
         if post_content and post_author:
-            return f"点赞了{post_author}的帖子：「{post_content}」"
+            return f"{post_author}의 게시물에 좋아요를 눌렀습니다: 「{post_content}」"
         elif post_content:
-            return f"点赞了一条帖子：「{post_content}」"
+            return f"게시물에 좋아요를 눌렀습니다: 「{post_content}」"
         elif post_author:
-            return f"点赞了{post_author}的一条帖子"
-        return "点赞了一条帖子"
+            return f"{post_author}의 게시물에 좋아요를 눌렀습니다"
+        return "게시물에 좋아요를 눌렀습니다"
     
     def _describe_dislike_post(self) -> str:
         """踩帖子 - 包含帖子原文和作者信息"""
@@ -85,12 +85,12 @@ class AgentActivity:
         post_author = self.action_args.get("post_author_name", "")
         
         if post_content and post_author:
-            return f"踩了{post_author}的帖子：「{post_content}」"
+            return f"{post_author}의 게시물에 싫어요를 눌렀습니다: 「{post_content}」"
         elif post_content:
-            return f"踩了一条帖子：「{post_content}」"
+            return f"게시물에 싫어요를 눌렀습니다: 「{post_content}」"
         elif post_author:
-            return f"踩了{post_author}的一条帖子"
-        return "踩了一条帖子"
+            return f"{post_author}의 게시물에 싫어요를 눌렀습니다"
+        return "게시물에 싫어요를 눌렀습니다"
     
     def _describe_repost(self) -> str:
         """转发帖子 - 包含原帖内容和作者信息"""
@@ -98,12 +98,12 @@ class AgentActivity:
         original_author = self.action_args.get("original_author_name", "")
         
         if original_content and original_author:
-            return f"转发了{original_author}的帖子：「{original_content}」"
+            return f"{original_author}의 게시물을 리포스트했습니다: 「{original_content}」"
         elif original_content:
-            return f"转发了一条帖子：「{original_content}」"
+            return f"게시물을 리포스트했습니다: 「{original_content}」"
         elif original_author:
-            return f"转发了{original_author}的一条帖子"
-        return "转发了一条帖子"
+            return f"{original_author}의 게시물을 리포스트했습니다"
+        return "게시물을 리포스트했습니다"
     
     def _describe_quote_post(self) -> str:
         """引用帖子 - 包含原帖内容、作者信息和引用评论"""
@@ -113,16 +113,16 @@ class AgentActivity:
         
         base = ""
         if original_content and original_author:
-            base = f"引用了{original_author}的帖子「{original_content}」"
+            base = f"{original_author}의 게시물을 인용했습니다 「{original_content}」"
         elif original_content:
-            base = f"引用了一条帖子「{original_content}」"
+            base = f"게시물을 인용했습니다 「{original_content}」"
         elif original_author:
-            base = f"引用了{original_author}的一条帖子"
+            base = f"{original_author}의 게시물을 인용했습니다"
         else:
-            base = "引用了一条帖子"
-        
+            base = "게시물을 인용했습니다"
+
         if quote_content:
-            base += f"，并评论道：「{quote_content}」"
+            base += f", 댓글을 달았습니다: 「{quote_content}」"
         return base
     
     def _describe_follow(self) -> str:
@@ -130,8 +130,8 @@ class AgentActivity:
         target_user_name = self.action_args.get("target_user_name", "")
         
         if target_user_name:
-            return f"关注了用户「{target_user_name}」"
-        return "关注了一个用户"
+            return f"사용자 「{target_user_name}」을(를) 팔로우했습니다"
+        return "사용자를 팔로우했습니다"
     
     def _describe_create_comment(self) -> str:
         """发表评论 - 包含评论内容和所评论的帖子信息"""
@@ -141,13 +141,13 @@ class AgentActivity:
         
         if content:
             if post_content and post_author:
-                return f"在{post_author}的帖子「{post_content}」下评论道：「{content}」"
+                return f"{post_author}의 게시물 「{post_content}」에 댓글을 달았습니다: 「{content}」"
             elif post_content:
-                return f"在帖子「{post_content}」下评论道：「{content}」"
+                return f"게시물 「{post_content}」에 댓글을 달았습니다: 「{content}」"
             elif post_author:
-                return f"在{post_author}的帖子下评论道：「{content}」"
-            return f"评论道：「{content}」"
-        return "发表了评论"
+                return f"{post_author}의 게시물에 댓글을 달았습니다: 「{content}」"
+            return f"댓글을 달았습니다: 「{content}」"
+        return "댓글을 작성했습니다"
     
     def _describe_like_comment(self) -> str:
         """点赞评论 - 包含评论内容和作者信息"""
@@ -155,12 +155,12 @@ class AgentActivity:
         comment_author = self.action_args.get("comment_author_name", "")
         
         if comment_content and comment_author:
-            return f"点赞了{comment_author}的评论：「{comment_content}」"
+            return f"{comment_author}의 댓글에 좋아요를 눌렀습니다: 「{comment_content}」"
         elif comment_content:
-            return f"点赞了一条评论：「{comment_content}」"
+            return f"댓글에 좋아요를 눌렀습니다: 「{comment_content}」"
         elif comment_author:
-            return f"点赞了{comment_author}的一条评论"
-        return "点赞了一条评论"
+            return f"{comment_author}의 댓글에 좋아요를 눌렀습니다"
+        return "댓글에 좋아요를 눌렀습니다"
     
     def _describe_dislike_comment(self) -> str:
         """踩评论 - 包含评论内容和作者信息"""
@@ -168,34 +168,34 @@ class AgentActivity:
         comment_author = self.action_args.get("comment_author_name", "")
         
         if comment_content and comment_author:
-            return f"踩了{comment_author}的评论：「{comment_content}」"
+            return f"{comment_author}의 댓글에 싫어요를 눌렀습니다: 「{comment_content}」"
         elif comment_content:
-            return f"踩了一条评论：「{comment_content}」"
+            return f"댓글에 싫어요를 눌렀습니다: 「{comment_content}」"
         elif comment_author:
-            return f"踩了{comment_author}的一条评论"
-        return "踩了一条评论"
+            return f"{comment_author}의 댓글에 싫어요를 눌렀습니다"
+        return "댓글에 싫어요를 눌렀습니다"
     
     def _describe_search(self) -> str:
         """搜索帖子 - 包含搜索关键词"""
         query = self.action_args.get("query", "") or self.action_args.get("keyword", "")
-        return f"搜索了「{query}」" if query else "进行了搜索"
+        return f"「{query}」을(를) 검색했습니다" if query else "검색을 수행했습니다"
     
     def _describe_search_user(self) -> str:
         """搜索用户 - 包含搜索关键词"""
         query = self.action_args.get("query", "") or self.action_args.get("username", "")
-        return f"搜索了用户「{query}」" if query else "搜索了用户"
+        return f"사용자 「{query}」을(를) 검색했습니다" if query else "사용자를 검색했습니다"
     
     def _describe_mute(self) -> str:
         """屏蔽用户 - 包含被屏蔽用户的名称"""
         target_user_name = self.action_args.get("target_user_name", "")
         
         if target_user_name:
-            return f"屏蔽了用户「{target_user_name}」"
-        return "屏蔽了一个用户"
+            return f"사용자 「{target_user_name}」을(를) 차단했습니다"
+        return "사용자를 차단했습니다"
     
     def _describe_generic(self) -> str:
         # 对于未知的动作类型，生成通用描述
-        return f"执行了{self.action_type}操作"
+        return f"{self.action_type} 액션을 수행했습니다"
 
 
 class ZepGraphMemoryUpdater:
@@ -217,8 +217,8 @@ class ZepGraphMemoryUpdater:
     
     # 平台名称映射（用于控制台显示）
     PLATFORM_DISPLAY_NAMES = {
-        'twitter': '世界1',
-        'reddit': '世界2',
+        'twitter': 'World 1',
+        'reddit': 'World 2',
     }
     
     # 发送间隔（秒），避免请求过快

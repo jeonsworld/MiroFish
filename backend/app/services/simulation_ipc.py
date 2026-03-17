@@ -184,7 +184,7 @@ class SimulationIPCClient:
         except OSError:
             pass
         
-        raise TimeoutError(f"等待命令响应超时 ({timeout}秒)")
+        raise TimeoutError(f"Command response timeout ({timeout}s)")
     
     def send_interview(
         self,
