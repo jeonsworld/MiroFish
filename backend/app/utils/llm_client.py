@@ -55,13 +55,23 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
         }
-        
+
         if response_format:
             kwargs["response_format"] = response_format
-        
-        response = self.client.chat.completions.create(**kwargs)
+
+        # 최신 OpenAI 모델(o1, gpt-5 등)은 max_tokens 대신 max_completion_tokens 사용
+        try:
+            kwargs["max_completion_tokens"] = max_tokens
+            response = self.client.chat.completions.create(**kwargs)
+        except Exception as e:
+            if "max_completion_tokens" in str(e) or "Unsupported parameter" in str(e):
+                kwargs.pop("max_completion_tokens", None)
+                kwargs["max_tokens"] = max_tokens
+                response = self.client.chat.completions.create(**kwargs)
+            else:
+                raise
+
         content = response.choices[0].message.content
         # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
