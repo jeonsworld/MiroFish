@@ -33,13 +33,20 @@ class LLMClient:
         )
     
     def _create_with_param_fallback(self, kwargs: dict):
-        """Call chat.completions.create, auto-dropping unsupported params."""
-        import re as _re
+        """Call chat.completions.create, auto-dropping unsupported params.
+
+        Reasoning models (o1, gpt-5, etc.) reject temperature and only
+        accept max_completion_tokens (not max_tokens). They also consume
+        large amounts of reasoning tokens, so when temperature is rejected
+        we also remove max_completion_tokens to avoid empty responses due
+        to reasoning token budget exhaustion.
+        """
         _PARAM_FALLBACKS = {
             "max_completion_tokens": "max_tokens",  # try legacy name
             "max_tokens": None,                     # just drop
             "temperature": None,
         }
+        is_reasoning_model = False
         while True:
             try:
                 return self.client.chat.completions.create(**kwargs)
@@ -52,7 +59,14 @@ class LLMClient:
                 for param, fallback in _PARAM_FALLBACKS.items():
                     if param in err and param in kwargs:
                         val = kwargs.pop(param)
-                        if fallback and fallback not in kwargs:
+                        if param == "temperature":
+                            # Temperature rejected = reasoning model.
+                            # Remove token limits too, since reasoning
+                            # tokens consume most of the budget.
+                            is_reasoning_model = True
+                            kwargs.pop("max_completion_tokens", None)
+                            kwargs.pop("max_tokens", None)
+                        elif fallback and fallback not in kwargs:
                             kwargs[fallback] = val
                         dropped = True
                         break
